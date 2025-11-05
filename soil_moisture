@@ -1,0 +1,47 @@
+#include <ESP8266WiFi.h>
+ #include <ThingSpeak.h>
+ // Replace with your WiFi credentials
+ const char* ssid = "Galaxy";
+ const char* password = "omsairam";
+ // ThingSpeak details
+ unsigned long channelID =3088407;       
+// e.g. 123456
+ const char* writeAPIKey = "XC5V1GOMDRFW4DB9";
+ WiFiClient client;
+ const int soilMoisturePin = A0;
+ void setup() {
+ Serial.begin(115200);
+ delay(10);
+ // Connect to WiFi
+ WiFi.begin(ssid, password);
+ Serial.print("Connecting to WiFi");
+ while (WiFi.status() != WL_CONNECTED) {
+ delay(500);
+ Serial.print(".");
+ }
+ Serial.println("\nWiFi connected");
+ // Initialize ThingSpeak
+ ThingSpeak.begin(client);
+ }
+ void loop() {
+ int sensorValue = analogRead(soilMoisturePin);
+ // Map raw sensor value to moisture percentage (100% wet, 0% dry)
+ int moisturePercent = map(sensorValue, 1024, 346, 0, 100);
+ moisturePercent = constrain(moisturePercent, 0, 100);
+ Serial.print("Raw Sensor Value: ");
+ Serial.print(sensorValue);
+ Serial.print(" | Soil Moisture: ");
+Serial.print(moisturePercent);
+ Serial.println("%");
+ // Send to ThingSpeak
+ ThingSpeak.setField(1, moisturePercent);
+ int response = ThingSpeak.writeFields(channelID, writeAPIKey);
+ if(response == 200) {
+ Serial.println("Data sent to ThingSpeak successfully.");
+ } else {
+ Serial.print("Error sending data. HTTP response code: ");
+ Serial.println(response);
+ }
+ delay(15000);  // Send data every 15 seconds
+ }
+ 
